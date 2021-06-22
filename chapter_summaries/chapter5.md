@@ -9,6 +9,8 @@
 * How to use XComs to share state between tasks
 * Taskflow API (Airflow 2): how it can help simplify Python-heavy DAGS
 
+
+
 ## Branching, condition-checking, BranchPythonOperator 
 
 It's possible to create a *fan-in structure* for multiple items that feed into a single downstream task. 
@@ -66,3 +68,18 @@ def _latest_only(**context):
 latest_only = PythonOperator(task_id = 'latest_only', python_callable=_latest_only, dag=dag)
 latest_only >> deploy_model 
 ```
+
+What is a trigger rule? 
+* Default: `all_success`. All previous tasks must have succeeded else failure is propagated.
+* Other trigger rules: 
+  * `all_failed`: triggers when all parent tasks have failed (or failure has propagated)
+  * `all_done`: triggers when all parents are done (regardless of success or fail) 
+  * `one_failed`: triggers as soon as 1 parent fails
+  * `one_success`: triggers as soon as 1 parent succeeds
+  * `none_failed`: triggers if no fails (either success or skip)
+  * `none_skipped`: triggers if no skips (either success or failure)
+  * `dummy`: triggers regardless of any upstream state
+
+
+
+## Sharing data between tasks 
