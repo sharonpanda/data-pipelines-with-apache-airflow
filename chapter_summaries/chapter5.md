@@ -45,7 +45,24 @@ pick_erp_system = BranchPythonOperator(task_id = 'pick_erp_system', python_calla
 join_branch = DummyOperator(task_id = 'join_erp_branch', trigger_rule = 'none_failed')
 
 # define dependencies 
-start_task >> pick_erp_system >> [fetch_sales_old, fetch_sales_new] >> [clean_sales_old, clean_sales_new] >> join_branch >> join_datasets >> train_model >> deploy_model 
+start_task >> pick_erp_system >> [fetch_sales_old, fetch_sales_new] >> [clean_sales_old, clean_sales_new] >> join_branch 
+join_branch >> join_datasets >> train_model >> deploy_model 
+```
 
+Conditional tasks: e.g. run only when certain data sets are available or deploy only for most recent execution date. 
 
+* Conditions within tasks have same drawback as earlier branching implementation. Can't see and track within Airflow UI!
+* Use new AirflowSkipException 
+
+```
+def _latest_only(**context): 
+  # define boundaries for execution window
+  left_window = context['dag'].following_schedule(context['execution_date'])
+  right_window = context['dag'].following_schedule(left_window) 
+  now = pendulum.utcnow()
+  if not left_window < now <= right_window: 
+    raise AirflowSkipException("Not the most recent run!")
+    
+latest_only = PythonOperator(task_id = 'latest_only', python_callable=_latest_only, dag=dag)
+latest_only >> deploy_model 
 ```
