@@ -83,3 +83,20 @@ What is a trigger rule?
 
 
 ## Sharing data between tasks 
+
+* `xcom_push` method: to publish xcom values explicitly within task. 
+  * view published xcom values in web interface in admin > xcoms 
+
+
+```
+def _train_model(**context): 
+  model_id = str(uuid.uid4())
+  context['task_instance'].xcom_push(key='model_id', value=model_id)
+
+train_model = PythonOperator(task_id='train_model', python_callable=_train_model,)
+
+def _deploy_model(**context): 
+  model_id = context['task_instance'].xcom_pull(task_ids='train_model', key='model_id'
+
+deploy_model = PythonOperator(task_id='deploy_model', python_callable=_deploy_model)
+```
